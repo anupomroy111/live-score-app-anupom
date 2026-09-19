@@ -1,0 +1,37 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /matches/{matchId} {
+      allow read: if true;
+
+      // Assignment demo only. Writes are public because the app has no sign-in.
+      allow create: if request.resource.data.keys().hasOnly([
+          'teamA', 'teamB', 'scoreA', 'scoreB', 'status',
+          'matchDate', 'venue', 'details'
+        ])
+        && request.resource.data.keys().hasAll([
+          'teamA', 'teamB', 'scoreA', 'scoreB', 'status',
+          'matchDate', 'venue', 'details'
+        ])
+        && request.resource.data.teamA is string
+        && request.resource.data.teamB is string
+        && request.resource.data.venue is string
+        && request.resource.data.details is string
+        && request.resource.data.scoreA is int
+        && request.resource.data.scoreB is int
+        && request.resource.data.scoreA >= 0
+        && request.resource.data.scoreB >= 0
+        && request.resource.data.status in ['Upcoming', 'Live', 'Finished']
+        && request.resource.data.matchDate is timestamp;
+
+      allow update: if request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['scoreA', 'scoreB', 'status'])
+        && request.resource.data.scoreA is int
+        && request.resource.data.scoreB is int
+        && request.resource.data.scoreA >= 0
+        && request.resource.data.scoreB >= 0
+        && request.resource.data.status in ['Upcoming', 'Live', 'Finished'];
+    }
+  }
+}
